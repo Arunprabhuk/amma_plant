@@ -22,6 +22,7 @@ import withCameraAndLibrary from "../HOC/withCameraAndLibrary";
 import { useKeyboardVisible } from "../hooks/useKeyBoardVisible";
 import { useDispatch } from "react-redux";
 import { registerUser } from "../redux/action/AuthAction";
+import { Base64 } from "js-base64";
 const intailState = () => {
   return {
     fullName: "",
@@ -215,14 +216,17 @@ const OrganizationLogin = ({
   };
 
   const handleOnSignUp = () => {
+    const pwd = Base64.encode(password);
+    const cfPwd = Base64.encode(confirmPassword);
+    console.log(pwd, cfPwd);
     const organizationUserData = {
       fullname: fullName,
       email,
       mobile,
       image: imageUri,
       role: isRegisterUser ? "RegisterUser" : "organizationUser",
-      password,
-      confirmPassword,
+      password: pwd,
+      confirmPassword: cfPwd,
     };
     const regiserUserData = {
       selectId,
@@ -279,8 +283,6 @@ const OrganizationLogin = ({
                   style={{
                     elevation: 10,
                     backgroundColor: CommonColor.secondary,
-                    borderWidth: checkUri ? 2 : 0,
-                    borderColor: checkUri ? "red" : null,
                     width: 120,
                     height: 120,
                     borderRadius: 100,

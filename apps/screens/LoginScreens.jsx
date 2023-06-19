@@ -16,7 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../redux/action/AuthAction";
 import { LoginDetail } from "../data/userGroupData";
 import serverURL from "../helpers/serverURL";
-import config from "../config";
+import { Base64 } from "js-base64";
 
 const LoginScreen = ({ navigation }) => {
   const intialState = {
@@ -35,7 +35,8 @@ const LoginScreen = ({ navigation }) => {
     }));
   };
   const onLoginHandler = () => {
-    const body = { email, password };
+    const pwd = Base64.encode(password);
+    const body = { email, password: pwd };
     dispatch(loginUser(body, navigation));
   };
   serverURL();
@@ -68,19 +69,19 @@ const LoginScreen = ({ navigation }) => {
               onPress={onLoginHandler}
             />
           </View>
-          <View>
+          {/* <View>
             <Text style={{ color: "white", marginVertical: 5, fontSize: 10 }}>
               OR
             </Text>
-          </View>
-          <View style={styles.IconContainer}>
+          </View> */}
+          {/* <View style={styles.IconContainer}>
             <TouchableOpacity style={styles.iconBtn}>
               <Image source={require("../assets/image/google1.png")} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn}>
               <Image source={require("../assets/image/appleWhite.png")} />
             </TouchableOpacity>
-          </View>
+          </View> */}
         </View>
       </ImageBackground>
     </View>

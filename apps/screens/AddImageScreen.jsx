@@ -11,15 +11,19 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
+  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   SafeAreaView,
 } from "react-native";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useGeolocation } from "../hooks/useGeoLocation";
+import useLocation, {
+  requestLocationPermission,
+  useGeolocation,
+} from "../hooks/useGeoLocation";
 import Toast from "react-native-toast-message";
-import { add, camera, edit } from "../constants/image";
+import { add, avatarBoy, camera, edit } from "../constants/image";
 import CommonSwitch from "../components/common/commonSwitch";
 import CommonInput from "../components/common/commonInput";
 import CommonButton from "../components/common/CommonButton";
@@ -29,28 +33,124 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import Map from "../components/Map";
 import { postAction } from "../redux/action/PostAction";
 import { useFocusEffect } from "@react-navigation/native";
+import Loader from "../components/Loader";
+import { fetchLocationName } from "../redux/action/AuthAction";
+import { DELETE_LOCATION } from "../redux/actionTypes";
+import Geolocation from "react-native-geolocation-service";
 const intailState = () => {
   return {
     description: "",
     tags: "",
-    liveLocation: true,
+    liveLocation: false,
     isVisible: false,
+    imageUrL: null,
+    error: false,
+    selectionRoundCorner: false,
+    selectionMode: 0,
+    longitude: null,
+    latitude: null,
   };
 };
 const AddImage = ({ setOpenCamera, imageUri, navigation }) => {
   const dispatch = useDispatch();
   const [state, setState] = React.useState(intailState());
-  const [error, position] = useGeolocation();
-  const { description, tags, liveLocation, isVisible } = state;
+  const { geoLocation, isLoadingLocation, selectedLocation } = useSelector(
+    (state) => state.auth
+  );
+  const { isUploadLoading, userDetail, isSuccessfullyPost } = useSelector(
+    (state) => state.post
+  );
+  const { longitude, latitude } = state;
+  const {
+    description,
+    tags,
+    liveLocation,
+    isVisible,
+    imageUrL,
+    selectionMode,
+    selectionRoundCorner,
+  } = state;
+  React.useEffect(() => {
+    if (description !== "") {
+      setState((prev) => ({
+        ...prev,
+        error: false,
+      }));
+    }
+  }, [description]);
+  const getGeoLocaation = () => {
+    const config = {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 1000,
+    };
 
+    Geolocation.getCurrentPosition(
+      (info) =>
+        setState((prev) => ({
+          ...prev,
+          longitude: info.coords.longitude,
+          latitude: info.coords.latitude,
+        })),
+
+      (error) => console.log("ERROR", error),
+      config
+    );
+  };
   React.useEffect(() => {
     if (liveLocation) {
+      console.log("workin");
+      requestLocationPermission();
+      getGeoLocaation();
       Toast.show({
         type: "SuccessToast",
         text1: "Live Location Captured",
-      });
+      }),
+        dispatch({
+          type: DELETE_LOCATION,
+        });
     }
   }, [liveLocation]);
+  React.useEffect(() => {
+    if (imageUri) {
+      const data = imageUri.hasOwnProperty("didCancel")
+        ? null
+        : imageUri.assets[0].uri;
+      setState((prev) => ({
+        ...prev,
+        imageUrL: data,
+      }));
+    }
+  }, [imageUri]);
+  React.useEffect(() => {
+    const focusHandler = navigation.addListener("focus", () => {
+      setState((prev) => ({
+        ...prev,
+        description: "",
+        test: "",
+        imageUrL: null,
+        liveLocation: false,
+        selectionMode: 0,
+        longitude: null,
+        latitude: null,
+      }));
+    });
+    return focusHandler;
+  }, [navigation]);
+  React.useEffect(() => {
+    if (isSuccessfullyPost) {
+      setState((prev) => ({
+        ...prev,
+        description: "",
+        test: "",
+        imageUrL: null,
+        liveLocation: true,
+        selectionMode: 0,
+        longitude: null,
+        latitude: null,
+      }));
+    }
+  }, [isSuccessfullyPost]);
 
   const handleChange = (name) => (event) => {
     event.persist();
@@ -62,20 +162,7 @@ const AddImage = ({ setOpenCamera, imageUri, navigation }) => {
   const onOpenCameraPopup = () => {
     setOpenCamera(true);
   };
-  const onSelectSwitch = (index) => {
-    if (index !== 1) {
-      setState((prev) => ({
-        ...prev,
-        liveLocation: false,
-        isVisible: true,
-      }));
-    } else {
-      setState((prev) => ({
-        ...prev,
-        liveLocation: true,
-      }));
-    }
-  };
+
   const onClose = () => {
     setState((prev) => ({
       ...prev,
@@ -83,24 +170,63 @@ const AddImage = ({ setOpenCamera, imageUri, navigation }) => {
       isVisible: false,
     }));
   };
+  const onLocationSelect = (event) => {
+    const { longitude, latitude } = event.nativeEvent.coordinate;
+    dispatch(fetchLocationName(latitude, longitude));
+    onClose();
+  };
+  const validateForm = () => {
+    if (description === "") {
+      setState((prev) => ({
+        ...prev,
+        error: true,
+      }));
+    }
+  };
   const handleUpdate = () => {
+    validateForm();
     const body = {
       description,
       tags,
-      longtitude: position.longitude,
-      latitude: position.latitude,
+      longtitude: liveLocation
+        ? longitude
+        : geoLocation
+        ? geoLocation.lat
+        : longitude,
+      latitude: liveLocation
+        ? latitude
+        : geoLocation
+        ? geoLocation.lat
+        : latitude,
       imageUri,
+      id: userDetail.id,
     };
-    dispatch(postAction(body, navigation));
+    dispatch(postAction(body));
   };
-
+  console.log(liveLocation, longitude, latitude, geoLocation, "livelocation");
+  const updatedSwitchData = (val) => {
+    if (val === 1) {
+      setState((prev) => ({
+        ...prev,
+        selectionMode: 1,
+        liveLocation: true,
+      }));
+    } else if (val === 2) {
+      setState((prev) => ({
+        ...prev,
+        selectionMode: 2,
+        liveLocation: false,
+        isVisible: true,
+      }));
+    }
+  };
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView style={{ flex: 1 }}>
         <View style={styles.firstContainer}>
-          {imageUri ? (
+          {imageUrL ? (
             <ImageBackground
-              source={{ uri: imageUri.assets[0].uri || imageUri }}
+              source={{ uri: imageUrL }}
               style={{
                 width: "100%",
                 height: "100%",
@@ -125,28 +251,33 @@ const AddImage = ({ setOpenCamera, imageUri, navigation }) => {
             placeholder={"Description"}
             placeholderTextColor="#00000090"
             onChange={handleChange("description")}
+            value={description}
+            isErr={state.error}
           />
           <CommonInput
             name={"tags"}
             placeholder={"Tags"}
             placeholderTextColor="#00000090"
             onChange={handleChange("tags")}
+            value={tags}
           />
           <View style={{ justifyContent: "flex-end" }}>
             <CommonSwitch
-              selectionMode={1}
-              roundCorner={true}
+              selectionMode={selectionMode}
+              roundCorner={selectionRoundCorner}
               option1={"ON"}
               option2={"OFF"}
-              onSelectSwitch={onSelectSwitch}
               selectionColor={"#C47A5E"}
+              isLoadingLocation={isLoadingLocation}
+              updatedSwitchData={updatedSwitchData}
             />
           </View>
 
           <CommonButton
             title={"UPLOAD"}
             onPress={handleUpdate}
-            disabled={description === "" || tags === ""}
+            // disabled={description === "" || imageUrL === null}
+            isLoading={isUploadLoading}
           />
         </View>
         {!liveLocation && (
@@ -155,9 +286,13 @@ const AddImage = ({ setOpenCamera, imageUri, navigation }) => {
             onClose={onClose}
             children={
               <View
-                style={{ flex: 1, backgroundColor: "white", borderRadius: 10 }}
+                style={{
+                  flex: 1,
+                  backgroundColor: "white",
+                  borderRadius: 10,
+                }}
               >
-                <Map hideAutoComplete />
+                <Map onLocationSelect={onLocationSelect} />
               </View>
             }
           />

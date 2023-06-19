@@ -14,7 +14,7 @@ import Icon, { Icons } from "../../constants/Icons";
 import { addBlack, avatarBoy, home, logout } from "../../constants/image";
 import { Image } from "react-native-animatable";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import serverURL from "../../helpers/serverURL";
 export default function DrawerContainer({ navigation }) {
   const { userDetail } = useSelector((state) => state.post);
 
@@ -60,7 +60,9 @@ export default function DrawerContainer({ navigation }) {
               source={
                 userDetail
                   ? {
-                      uri: `${serverURL}/${userDetail?.profilePicture}`,
+                      uri: `${serverURL()}/${userDetail?.profilePicture
+                        .split("/")
+                        .pop()}`,
                     }
                   : avatarBoy
               }
@@ -86,6 +88,7 @@ export default function DrawerContainer({ navigation }) {
                   width: "100%",
                   padding: 10,
                 }}
+                key={index}
                 onPress={() => onhandleClick(item.route)}
               >
                 <Image source={item.leftSource} />

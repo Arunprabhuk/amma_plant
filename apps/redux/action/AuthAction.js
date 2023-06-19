@@ -5,6 +5,8 @@ import {
   LOGIN_FAILED,
   LOGIN_PEDNDING,
   LOGIN_SUCCESSFULLY,
+  PENDING_LOCATION,
+  UPDATE_LONG_LAT,
 } from "../actionTypes";
 import { setToken } from "../../utiltis/utilitis";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,6 +30,17 @@ const loginPending = () => {
     type: LOGIN_PEDNDING,
   };
 };
+const updateLatAndLong = (data) => {
+  return {
+    type: UPDATE_LONG_LAT,
+    payload: data,
+  };
+};
+const pendingLocation = () => {
+  return {
+    type: PENDING_LOCATION,
+  };
+};
 
 export const registerUser = (
   {
@@ -43,7 +56,15 @@ export const registerUser = (
   },
   navigation
 ) => {
+  console.log("passsssss", password, confirmPassword);
   return async (dispatch) => {
+    if (!image) {
+      Toast.show({
+        type: "ErrorToast",
+        text1: "Please select profile picture",
+      });
+      return;
+    }
     try {
       const formData = new FormData();
       formData.append("image", {
@@ -59,6 +80,7 @@ export const registerUser = (
       formData.append("role", role);
       formData.append("selectId", selectId);
       formData.append("idNumber", idNumber);
+      console.log(serverURL, "hello");
       const response = await fetch(`${serverURL()}/api/signup`, {
         method: "POST",
         headers: {
@@ -132,43 +154,38 @@ export const loginUser = (data, navigation) => {
     }
   };
 };
-export const googleLogin = (idToken) => {
+
+export const fetchLocationName = (lat, long) => {
   return async (dispatch) => {
-    try {
-      console.log(idToken);
-      const response = await fetch(`${serverURL()}/api/google-signin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: idToken,
-      });
-      const result = await response.json();
-      console.log(result);
-      if (result.statuscode === 200) {
-        Toast.show({
-          type: "SuccessToast",
-          text1: result.message,
-        });
-        dispatch(LoginSuccess(result.user));
-        await AsyncStorage.setItem("token", result.token);
-        await AsyncStorage.setItem("loginId", result.id);
-        await AsyncStorage.setItem("isLoggedin", "true");
-        // navigation.navigate("DrawerStack");
-      } else if (result.statuscode === 400) {
-        Toast.show({
-          type: "ErrorToast",
-          text1: result.message,
-        });
-      } else {
-        Toast.show({
-          type: "ErrorToast",
-          text1: result.error,
-        });
+    dispatch(pendingLocation());
+    await fetch(
+      `https://www.mapquestapi.com/geocoding/v1/reverse?key=ee8a3vrSXiTtex2n4cjEVJAjet2Sxjw4&location=${lat}%2C${long}&outFormat=json&thumbMaps=true`,
+      {
+        method: "GET",
       }
-      dispatch(loginFailed());
-    } catch (error) {
-      console.log(error);
-    }
+    )
+      .then((response) => response.json())
+      .then((responseJson) => {
+        console.log("responseJson", responseJson);
+        const [res] = responseJson.results
+          .map((item) => {
+            return item.locations;
+          })
+          .map((item1) => item1[0]);
+        const [latAndLong] = responseJson.results
+          .map((item) => {
+            return item.providedLocation;
+          })
+          .map((item1) => item1["latLng"]);
+        console.log(latAndLong);
+        dispatch(updateLatAndLong(latAndLong));
+
+        if ([res].length > 0) {
+          Toast.show({
+            type: "SuccessToast",
+            text1: `location set successfully`,
+          });
+        }
+      });
   };
 };

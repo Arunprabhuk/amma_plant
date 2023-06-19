@@ -1,24 +1,15 @@
 import React, { useState } from "react";
 
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { ActivityIndicator, Text, View, TouchableOpacity } from "react-native";
 
 const CommonSwitch = ({
-  navigation,
   selectionMode,
-  roundCorner,
   option1,
   option2,
-  onSelectSwitch,
   selectionColor,
+  isLoadingLocation,
+  updatedSwitchData,
 }) => {
-  const [getSelectionMode, setSelectionMode] = useState(selectionMode);
-  const [getRoundCorner, setRoundCorner] = useState(roundCorner);
-
-  const updatedSwitchData = (val) => {
-    setSelectionMode(val);
-    onSelectSwitch(val);
-  };
-
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
       <Text
@@ -31,63 +22,87 @@ const CommonSwitch = ({
       >
         Live Location{" "}
       </Text>
-      <View
-        style={{
-          height: 24,
-          width: 64,
-          backgroundColor: "white",
-          borderRadius: getRoundCorner ? 20 : 0,
-          borderWidth: 1,
-          borderColor: selectionColor,
-          flexDirection: "row",
-          justifyContent: "center",
-          padding: 2,
-        }}
-      >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => updatedSwitchData(1)}
+      {isLoadingLocation ? (
+        <ActivityIndicator size="small" color="#00ff00" />
+      ) : (
+        <View
           style={{
-            flex: 1,
-
-            backgroundColor: getSelectionMode == 1 ? selectionColor : "white",
-            borderRadius: getRoundCorner ? 20 : 0,
+            height: 24,
+            width: 84,
+            backgroundColor: "white",
+            borderRadius: 50,
+            borderWidth: 1,
+            borderColor: selectionColor,
+            flexDirection: "row",
             justifyContent: "center",
             alignItems: "center",
+            position: "relative",
           }}
         >
-          <Text
-            style={{
-              color: getSelectionMode == 1 ? "white" : selectionColor,
-              fontSize: 10,
-            }}
-          >
-            {option1}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          TouchableOpacity
-          activeOpacity={1}
-          onPress={() => updatedSwitchData(2)}
-          style={{
-            flex: 1,
+          {selectionMode === 0 && (
+            <View
+              style={{
+                height: 21,
+                width: 4,
+                backgroundColor: "#C47A5E",
+                borderRadius: 50,
+                position: "absolute",
+                zIndex: 5,
+              }}
+            />
+          )}
 
-            backgroundColor: getSelectionMode == 2 ? selectionColor : "white",
-            borderRadius: getRoundCorner ? 20 : 0,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Text
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => updatedSwitchData(1)}
             style={{
-              color: getSelectionMode == 2 ? "white" : selectionColor,
-              fontSize: 10,
+              flex: 1,
+              width: 40,
+              height: "100%",
+              backgroundColor: selectionMode === 1 ? selectionColor : "white",
+              borderTopLeftRadius: 10,
+              borderBottomLeftRadius: 10,
+              justifyContent: "center",
+              height: "100%",
+              alignItems: "center",
             }}
           >
-            {option2}
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={{
+                color: selectionMode === 1 ? "white" : "#C47A5E",
+                fontSize: 10,
+              }}
+            >
+              {option1}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            TouchableOpacity
+            activeOpacity={1}
+            onPress={() => updatedSwitchData(2)}
+            style={{
+              flex: 1,
+
+              backgroundColor: "white",
+              height: "100%",
+              backgroundColor: selectionMode === 2 ? "#C47A5E" : "white",
+              borderTopRightRadius: 10,
+              borderBottomRightRadius: 10,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                color: selectionMode === 2 ? "white" : "#C47A5E",
+                fontSize: 10,
+              }}
+            >
+              {option2}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };

@@ -4,29 +4,59 @@ import { useDispatch, useSelector } from "react-redux";
 import Map from "../components/Map";
 import Geolocation from "@react-native-community/geolocation";
 import { getLoginId, getToken } from "../utiltis/utilitis";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserData } from "../redux/action/PostAction";
+import { getGeolocation } from "../redux/action/AuthAction";
+
 // import { setLocation } from "../redux/slices/mapSlice";
 
 const HomePage = ({ navigation }) => {
   const dispatch = useDispatch();
+  const requestLocationPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: "Geolocation Permission",
+          message: "Can we access your location?",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK",
+        }
+      );
 
+      if (granted === "granted") {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (err) {
+      return false;
+    }
+  };
+  const getLocation = () => {
+    const result = requestLocationPermission();
+    result.then((res) => {
+      if (res) {
+        Geolocation.getCurrentPosition(
+          (position) => {
+            // setPosition(position.coords);
+            console.log("hello");
+          },
+          (error) => {
+            // See error code charts below.
+            // setPosition(false);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        );
+      }
+    });
+  };
   React.useEffect(() => {
     getLoginId().then((res) => {
       console.log(res, "auhhh");
       dispatch(getUserData(res));
     });
-    Geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-
-        // dispatch(setLocation({ latitude, longitude }));
-      },
-      (error) => {
-        console.log(error.code, error.message);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
+    getLocation();
   }, []);
   return (
     <View style={styles.container}>

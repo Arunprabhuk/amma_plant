@@ -1,6 +1,15 @@
-import { USER_DATA_GET_SUCCESSFULLY } from "../actionTypes";
+import {
+  IMAGE_UPLOADING_FAILED,
+  IMAGE_UPLOADING_PENDING,
+  IMAGE_UPLOADING_SUCCESSFULLY,
+  USER_DATA_GET_SUCCESSFULLY,
+  USER_IMAGE_GET_SUCCESSFULLY,
+} from "../actionTypes";
 const initialState = {
   userDetail: null,
+  isUploadLoading: false,
+  userImageDetails: [],
+  isSuccessfullyPost: false,
 };
 
 const postReducer = (state = initialState, action) => {
@@ -9,6 +18,27 @@ const postReducer = (state = initialState, action) => {
       return {
         ...state,
         userDetail: action.payload,
+      };
+    case IMAGE_UPLOADING_PENDING:
+      return {
+        ...state,
+        isUploadLoading: true,
+      };
+    case IMAGE_UPLOADING_SUCCESSFULLY:
+      return {
+        ...state,
+        isUploadLoading: false,
+        isSuccessfullyPost: true,
+      };
+    case IMAGE_UPLOADING_FAILED:
+      return {
+        ...state,
+        isUploadLoading: false,
+      };
+    case USER_IMAGE_GET_SUCCESSFULLY:
+      return {
+        ...state,
+        userImageDetails: action.payload,
       };
 
     default:

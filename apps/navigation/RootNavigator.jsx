@@ -1,15 +1,13 @@
 import { Image, Pressable } from "react-native";
-import React, { useEffect } from "react";
+import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import WelcomeScreen from "../screens/WelcomeScreen";
 import LoginScreen from "../screens/LoginScreens";
 import UserGroupScreen from "../screens/UserGroupScreen";
-import OrganizationLogin from "../screens/OrganizationLogin";
-import NormalUserLogin from "../screens/NormalUserLogin";
+import OrganizationLogin from "../screens/organizationLogin";
 import { backBtnWhite, backBtnblack } from "../constants/image";
 import DrawerStack from "../components/NavigatorComponents/DrawerNavigator";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getLoggedinStatus, getToken } from "../utiltis/utilitis";
+import { getToken } from "../utiltis/utilitis";
 import Splash from "../screens/splashScreen";
 
 const Stack = createStackNavigator();
@@ -71,17 +69,7 @@ const LoginStack = () => {
         name="OrganizationUser"
         component={OrganizationLogin}
       />
-      <Stack.Screen
-        options={({ navigation, route }) => ({
-          headerBackImage: () => (
-            <Left onPress={() => navigation.navigate("WelcomeScreen")} />
-          ),
-          title: "",
-          headerTransparent: true,
-        })}
-        name="NormalUserLogin"
-        component={NormalUserLogin}
-      />
+
       <Stack.Screen
         options={({ navigation, route }) => ({
           headerBackImage: () => (
@@ -99,6 +87,7 @@ const LoginStack = () => {
 
 const RootNavigator = ({ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
   React.useEffect(() => {
     checkLoginState();
   }, []);
